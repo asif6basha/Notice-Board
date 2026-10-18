@@ -13,16 +13,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
           pip install --upgrade pip buildozer cython==0.29.36 virtualenv
-      - name: Build APK
+            - name: Build APK
         run: |
           set +e
-          buildozer -v android debug > build.log 2>&1
+          buildozer -v android debug > raw.log 2>&1
           code=$?
+          sed -r 's/\x1b\[[0-9;]*[mK]//g' raw.log | grep -v '^#' | grep -v '^$' > build.log
           if [ $code -ne 0 ]; then
             echo "=== ERROR LINES ==="
-            grep -v "^# " build.log | grep -n -i -E "error|failed|not found|exception|no such" | tail -30
-            echo "=== LAST 40 LINES ==="
-            grep -v "^# " build.log | tail -40
+            grep -n -i -E "error|failed|not found|exception|no such" build.log | tail -15
+            echo "=== LAST 30 LINES ==="
+            tail -30 build.log
           fi
           exit $code
       - uses: actions/upload-artifact@v4
